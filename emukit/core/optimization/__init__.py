@@ -1,1 +1,2 @@
 from .acquisition_optimizer import AcquisitionOptimizer
+from .direct_optimizer import DirectOptimizer
