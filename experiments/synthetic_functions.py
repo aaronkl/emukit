@@ -126,12 +126,14 @@ for yi in bo.loop_state.Y:
         curr_inc = yi[0]
     traj.append(curr_inc)
     regret.append(curr_inc - f_opt)
-print(traj, regret)
+
+data = dict()
+data["regret"] = regret
 
 path = os.path.join(args.output_path, args.benchmark)
 os.makedirs(path, exist_ok=True)
 
-fname = os.path.join(path, "%s_%s_%d" % (args.model_type, args.acquisition_type, args.run_id))
+fname = os.path.join(path, "%s_%s_run_%d.json" % (args.model_type, args.acquisition_type, args.run_id))
 
 fh = open(fname, "w")
 json.dump(data, fh)
