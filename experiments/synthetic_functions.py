@@ -95,7 +95,7 @@ elif args.model_type == "rf":
 
 
 elif args.model_type == "gp":
-    kernel = Matern52(len(list_params), variance=1., ARD=False)
+    kernel = Matern52(len(list_params), variance=1., ARD=True)
     gpmodel = GPRegression(X_init, Y_init, kernel)
     gpmodel.optimize()
     model = GPyModelWrapper(gpmodel)
