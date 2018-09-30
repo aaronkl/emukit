@@ -7,7 +7,7 @@ from ..core.interfaces.models import IModel, IDifferentiable
 
 class BOGP(IModel, IDifferentiable):
 
-    def __init__(self, X_init, Y_init, noise=1e-10):
+    def __init__(self, X_init, Y_init, noise=1e-8):
         """
 
         :param X_init:
@@ -32,11 +32,13 @@ class BOGP(IModel, IDifferentiable):
                                    variance=np.var(self.Y), ARD=True)
 
         self.gp = GPy.models.GPRegression(self.X, self.Y, kernel=kernel, noise_var=noise)
+        # self.gp.likelihood.set_prior(GPy.priors.Exponential(1))
+        self.gp.likelihood.constrain_positive()
 
     def optimize(self, num_restarts=3, verbose=False):
         self.gp.likelihood.constrain_fixed(self.noise)
         self.gp.optimize_restarts(messages=verbose, num_restarts=num_restarts, robust=True)
-        self.gp.likelihood.unconstrain()
+        self.gp.likelihood.constrain_positive()
         self.gp.optimize_restarts(messages=verbose, num_restarts=num_restarts, robust=True)
 
     def predict(self, X):
