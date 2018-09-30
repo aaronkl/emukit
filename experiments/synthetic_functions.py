@@ -6,14 +6,11 @@ import numpy as np
 from hpolib.benchmarks.synthetic_functions import Branin, Hartmann3, Hartmann6, Bohachevsky, Rosenbrock, \
     GoldsteinPrice, Forrester, Camelback, SinOne, SinTwo
 
-from GPy.models import GPRegression
-from GPy.kern import Matern52
-
-from emukit.model_wrappers.gpy_model_wrappers import GPyModelWrapper
+from emukit.models.bo_gp import BOGP
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 from emukit.core.loop import FixedIterationsStoppingCondition, UserFunction, UserFunctionResult, Sequential
 from emukit.bayesian_optimization.acquisitions import NegativeLowerConfidenceBound, \
-    ProbabilityOfImprovement, ExpectedImprovement
+    ProbabilityOfImprovement, ExpectedImprovement, LogExpectedImprovement
 from emukit.models.bohamiann import Bohamiann
 from emukit.models.random_forest import RandomForest
 from emukit.experimental_design.model_free.random_design import RandomDesign
@@ -93,12 +90,8 @@ elif args.model_type == "rf":
     model = RandomForest(X_init=X_init, Y_init=Y_init)
     with_gradients = False
 
-
 elif args.model_type == "gp":
-    kernel = Matern52(len(list_params), variance=1., ARD=True)
-    gpmodel = GPRegression(X_init, Y_init, kernel)
-    gpmodel.optimize()
-    model = GPyModelWrapper(gpmodel)
+    model = BOGP(X_init=X_init, Y_init=Y_init)
 
 if args.acquisition_type == "ei":
     acquisition = ExpectedImprovement(model)
@@ -106,6 +99,9 @@ elif args.acquisition_type == "pi":
     acquisition = ProbabilityOfImprovement(model)
 elif args.acquisition_type == "nlcb":
     acquisition = NegativeLowerConfidenceBound(model)
+elif args.acquisition_type == "logei":
+    acquisition = LogExpectedImprovement(model)
+    with_gradients = False
 
 if with_gradients:
     acquisition_optimizer = AcquisitionOptimizer(space)
