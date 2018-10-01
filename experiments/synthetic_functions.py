@@ -10,7 +10,7 @@ from emukit.models.bo_gp import BOGP
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 from emukit.core.loop import FixedIterationsStoppingCondition, UserFunction, UserFunctionResult, Sequential
 from emukit.bayesian_optimization.acquisitions import NegativeLowerConfidenceBound, \
-    ProbabilityOfImprovement, ExpectedImprovement, LogExpectedImprovement
+    ProbabilityOfImprovement, ExpectedImprovement, LogExpectedImprovement, EntropySearch
 from emukit.models.bohamiann import Bohamiann
 from emukit.models.random_forest import RandomForest
 from emukit.models.dngo import DNGO
@@ -82,7 +82,6 @@ init_design = RandomDesign(space)
 X_init = init_design.get_samples(2)
 Y_init = np.array([b.objective_function(xi)["function_value"] for xi in X_init])[:, None]
 
-with_gradients = True
 
 if args.model_type == "bnn":
     model = Bohamiann(X_init=X_init, Y_init=Y_init, verbose=True)
@@ -106,7 +105,10 @@ elif args.acquisition_type == "nlcb":
     acquisition = NegativeLowerConfidenceBound(model)
 elif args.acquisition_type == "logei":
     acquisition = LogExpectedImprovement(model)
-    with_gradients = False
+elif args.acquisition_type == "entropy_search":
+    model = BOGP(X_init=X_init, Y_init=Y_init)
+    acquisition = EntropySearch(model, space=space)
+
 
 # if with_gradients:
 #    acquisition_optimizer = AcquisitionOptimizer(space)

@@ -3,9 +3,10 @@ from typing import Tuple
 import numpy as np
 import GPy
 from ..core.interfaces.models import IModel, IDifferentiable
+from emukit.bayesian_optimization.interfaces import IEntropySearchModel
 
 
-class BOGP(IModel, IDifferentiable):
+class BOGP(IModel, IDifferentiable, IEntropySearchModel):
 
     def __init__(self, X_init, Y_init, noise=1e-8):
         """
@@ -82,3 +83,26 @@ class BOGP(IModel, IDifferentiable):
         X_ = X
         d_mean_dx, d_variance_dx = self.gp.predictive_gradients(X_)
         return d_mean_dx[:, :, 0], d_variance_dx
+
+    def predict_covariance(self, X: np.ndarray, with_noise: bool=True) -> np.ndarray:
+        """
+        Calculates posterior covariance between points in X
+        :param X: Array of size n_points x n_dimensions containing input locations to compute posterior covariance at
+        :param with_noise: Whether to include likelihood noise in the covariance matrix
+        :return: Posterior covariance matrix of size n_points x n_points
+        """
+        _, v = self.gp.predict(X, full_cov=True, include_likelihood=with_noise)
+        v = np.clip(v, 1e-10, np.inf)
+
+        return v
+
+    def get_covariance_between_points(self, X1: np.ndarray, X2: np.ndarray) -> np.ndarray:
+        """
+        Calculate posterior covariance between two points
+        :param X1: An array of shape 1 x n_dimensions that contains a data single point. It is the first argument of the
+                   posterior covariance function
+        :param X2: An array of shape n_points x n_dimensions that may contain multiple data points. This is the second
+                   argument to the posterior covariance function.
+        :return: An array of shape n_points x 1 of posterior covariances between X1 and X2
+        """
+        return self.gp.posterior_covariance_between_points(X1, X2)
