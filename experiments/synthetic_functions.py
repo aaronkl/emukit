@@ -13,6 +13,7 @@ from emukit.bayesian_optimization.acquisitions import NegativeLowerConfidenceBou
     ProbabilityOfImprovement, ExpectedImprovement, LogExpectedImprovement
 from emukit.models.bohamiann import Bohamiann
 from emukit.models.random_forest import RandomForest
+from emukit.models.dngo import DNGO
 from emukit.experimental_design.model_free.random_design import RandomDesign
 from emukit.core import ContinuousParameter, ParameterSpace
 from emukit.core.optimization import AcquisitionOptimizer, DirectOptimizer
@@ -88,6 +89,10 @@ if args.model_type == "bnn":
 
 elif args.model_type == "rf":
     model = RandomForest(X_init=X_init, Y_init=Y_init)
+    with_gradients = False
+
+elif args.model_type == "dngo":
+    model = DNGO(X_init=X_init, Y_init=Y_init)
     with_gradients = False
 
 elif args.model_type == "gp":
