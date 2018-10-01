@@ -32,11 +32,13 @@ class Bohamiann(IModel, IDifferentiable):
         super().__init__()
 
         self.model = bohamiann.Bohamiann()
-
+        self.num_steps = 6000
+        self.num_burnin = 2000
         self._X = X_init
         self._Y = Y_init
 
-        self.model.train(X_init, Y_init, **kwargs)
+        self.model.train(X_init, Y_init, num_steps=self.num_steps,
+                         num_burn_in_steps=self.num_burnin, keep_every=100, **kwargs)
 
     @property
     def X(self):
@@ -63,10 +65,11 @@ class Bohamiann(IModel, IDifferentiable):
         :param X: new points
         :param Y: function values at new points X
         """
-        self._X = np.append(self._X, X, axis=0)
-        self._Y = np.append(self._Y, Y, axis=0)
+        self._X = X
+        self._Y = Y
 
-        self.model.train(self._X, self._Y)
+        self.model.train(self._X, self._Y, num_steps=self.num_steps,
+                         num_burn_in_steps=self.num_burnin, keep_every=100, verbose=True)
 
     def optimize(self) -> None:
         pass
@@ -80,7 +83,6 @@ class Bohamiann(IModel, IDifferentiable):
 
         :param X: points to compute gradients at
         """
-
         dm = np.array([self.model.predictive_mean_gradient(xi) for xi in X])
         dv = np.array([self.model.predictive_variance_gradient(xi) for xi in X])
 

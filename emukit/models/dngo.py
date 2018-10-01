@@ -51,8 +51,8 @@ class DNGO(IModel):
         :param X: new points
         :param Y: function values at new points X
         """
-        self._X = np.append(self._X, X, axis=0)
-        self._Y = np.append(self._Y, Y, axis=0)
+        self._X = X
+        self._Y = Y
 
         self.model.train(self._X, self._Y[:, 0])
 
