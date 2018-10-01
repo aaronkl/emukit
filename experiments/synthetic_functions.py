@@ -108,10 +108,10 @@ elif args.acquisition_type == "logei":
     acquisition = LogExpectedImprovement(model)
     with_gradients = False
 
-if with_gradients:
-    acquisition_optimizer = AcquisitionOptimizer(space)
-else:
-    acquisition_optimizer = DirectOptimizer(space)
+# if with_gradients:
+#    acquisition_optimizer = AcquisitionOptimizer(space)
+# else:
+acquisition_optimizer = DirectOptimizer(space)
 
 candidate_point_calculator = Sequential(acquisition, acquisition_optimizer)
 
