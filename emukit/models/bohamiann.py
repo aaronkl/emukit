@@ -12,6 +12,36 @@ except ImportError:
     """)
 
 
+import torch
+import torch.nn as nn
+def get_default_network(input_dimensionality: int) -> torch.nn.Module:
+    class AppendLayer(nn.Module):
+        def __init__(self, bias=True, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            if bias:
+                self.bias = nn.Parameter(torch.Tensor(1, 1))
+            else:
+                self.register_parameter('bias', None)
+
+        def forward(self, x):
+            return torch.cat((x, self.bias * torch.ones_like(x)), dim=1)
+
+    def init_weights(module):
+        if type(module) == AppendLayer:
+            nn.init.constant_(module.bias, val=np.log(1e-3))
+        elif type(module) == nn.Linear:
+            nn.init.kaiming_normal_(module.weight, mode="fan_in", nonlinearity="linear")
+            nn.init.constant_(module.bias, val=0.0)
+
+    return nn.Sequential(
+        nn.Linear(input_dimensionality, 10), nn.Tanh(),
+        nn.Linear(10, 10), nn.Tanh(),
+        nn.Linear(10, 10), nn.Tanh(),
+        nn.Linear(10, 1),
+        AppendLayer()
+    ).apply(init_weights)
+
+
 class Bohamiann(IModel, IDifferentiable):
 
     def __init__(self, X_init, Y_init, **kwargs):
@@ -31,13 +61,13 @@ class Bohamiann(IModel, IDifferentiable):
         """
         super().__init__()
 
-        self.model = bohamiann.Bohamiann()
-        self.num_steps = 6000
-        self.num_burnin = 2000
+        self.model = bohamiann.Bohamiann(get_network=get_default_network)
+        self.num_steps = 10000
+        self.num_burnin = 5000
         self._X = X_init
         self._Y = Y_init
 
-        self.model.train(X_init, Y_init, num_steps=self.num_steps,
+        self.model.train(X_init, Y_init, num_steps=self.num_steps, lr=1e-3,
                          num_burn_in_steps=self.num_burnin, keep_every=100, **kwargs)
 
     @property
