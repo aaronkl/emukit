@@ -38,7 +38,7 @@ class AffineInvariantEnsembleSampler(McmcSampler):
         """
         super(AffineInvariantEnsembleSampler, self).__init__(space)
 
-    def get_samples(self, n_samples, log_p_function, burn_in_steps=50, n_steps=100):
+    def get_samples(self, n_samples, log_p_function, burn_in_steps=300, n_steps=500):
         """
         Generates samples.
 

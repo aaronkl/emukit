@@ -7,7 +7,7 @@ from ...core.acquisition import Acquisition
 from ...core.interfaces import IModel, IDifferentiable
 from ...core.parameter_space import ParameterSpace
 
-from ..acquisitions import ExpectedImprovement
+from emukit.bayesian_optimization.acquisitions.log_expected_improvement import LogExpectedImprovement
 from ..interfaces import IEntropySearchModel
 from ..util import epmgp
 from ..util.mcmc_sampler import AffineInvariantEnsembleSampler, McmcSampler
@@ -16,7 +16,7 @@ from ..util.mcmc_sampler import AffineInvariantEnsembleSampler, McmcSampler
 class EntropySearch(Acquisition):
 
     def __init__(self, model: Union[IModel, IDifferentiable, IEntropySearchModel], space: ParameterSpace, sampler: McmcSampler = None,
-                 num_samples: int = 100, num_representer_points: int = 50,
+                 num_samples: int = 400, num_representer_points: int = 50,
                  proposal_function: Acquisition = None, burn_in_steps: int = 50) -> None:
 
         """
@@ -55,7 +55,7 @@ class EntropySearch(Acquisition):
         self.proposal_function = proposal_function
         if self.proposal_function is None:
 
-            ei = ExpectedImprovement(model)
+            ei = LogExpectedImprovement(model)
 
             def prop_func(x):
 
@@ -64,7 +64,7 @@ class EntropySearch(Acquisition):
                 else:
                     x_ = x
                 if self.space.check_points_in_domain(x_):
-                    return np.log(np.clip(ei.evaluate(x_)[0], 0., np.PINF))
+                    return ei.evaluate(x_)[0]
                 else:
                     return np.array([np.NINF])
 
