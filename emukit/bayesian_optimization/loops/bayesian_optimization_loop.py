@@ -8,6 +8,7 @@ from ...core.acquisition import Acquisition
 from ...core.interfaces import IModel
 
 from ..acquisitions.expected_improvement import ExpectedImprovement
+from ..acquisitions.entropy_search import EntropySearch
 
 
 class BayesianOptimizationLoop(OuterLoop):
@@ -45,3 +46,7 @@ class BayesianOptimizationLoop(OuterLoop):
         loop_state = LoopState(initial_results)
 
         super(BayesianOptimizationLoop, self).__init__(candidate_point_calculator, model_updater, loop_state)
+
+    def custom_step(self):
+        if type(self.candidate_point_calculator.acquisition) == EntropySearch:
+            self.candidate_point_calculator.acquisition.update_pmin()
