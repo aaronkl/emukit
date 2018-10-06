@@ -7,7 +7,7 @@ from ...core.acquisition import Acquisition
 from ...core.interfaces import IModel, IDifferentiable
 from ...core.parameter_space import ParameterSpace
 
-from emukit.bayesian_optimization.acquisitions.log_expected_improvement import LogExpectedImprovement
+from emukit.bayesian_optimization.acquisitions.expected_improvement import ExpectedImprovement
 from ..interfaces import IEntropySearchModel
 from ..util import epmgp
 from ..util.mcmc_sampler import AffineInvariantEnsembleSampler, McmcSampler
@@ -55,7 +55,7 @@ class EntropySearch(Acquisition):
         self.proposal_function = proposal_function
         if self.proposal_function is None:
 
-            ei = LogExpectedImprovement(model)
+            ei = ExpectedImprovement(model)
 
             def prop_func(x):
 
@@ -64,7 +64,11 @@ class EntropySearch(Acquisition):
                 else:
                     x_ = x
                 if self.space.check_points_in_domain(x_):
-                    return ei.evaluate(x_)[0]
+                    a = ei.evaluate(x_)[0]
+                    if np.isnan(a):
+                        return np.array([np.NINF])
+                    else:
+                        return a
                 else:
                     return np.array([np.NINF])
 
