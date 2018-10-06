@@ -1,5 +1,5 @@
 from .loop_state import LoopState
-from .user_function import UserFunction, UserFunctionWrapper
+from .user_function import UserFunction, UserFunctionWrapper, UserFunctionWithCostWrapper
 from .outer_loop import OuterLoop
 from .user_function_result import UserFunctionResult
 from .stopping_conditions import StoppingCondition, FixedIterationsStoppingCondition
