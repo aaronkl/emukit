@@ -4,6 +4,7 @@ import numpy as np
 
 from .user_function_result import UserFunctionResult
 
+
 def create_loop_state(x_init: np.ndarray, y_init: np.ndarray) -> None:
     """
     Creates a loop state object using the provided data
@@ -57,3 +58,11 @@ class LoopState(object):
                  in a 2d array: number of points by output dimensions.
         """
         return np.array([result.Y for result in self.results])
+
+    @property
+    def C(self) -> np.ndarray:
+        """
+        :return: Cost for evaluating the function
+                 in a 2d array: number of points by cost dimensions.
+        """
+        return np.array([result.C for result in self.results])

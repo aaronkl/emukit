@@ -31,4 +31,4 @@ class ExperimentalDesignLoop(OuterLoop):
         model_updater = FixedIntervalUpdater(model, update_interval)
         loop_state = create_loop_state(model.X, model.Y)
 
-        super().__init__(candidate_point_calculator, model_updater, loop_state)
+        super().__init__(candidate_point_calculator, [model_updater], loop_state)

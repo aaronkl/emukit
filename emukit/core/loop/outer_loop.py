@@ -20,15 +20,15 @@ class OuterLoop(object):
        criterion is met.
     2. Emukit only calculates the next points(s) to try and you evaluate your function or perform the experiment.
     """
-    def __init__(self, candidate_point_calculator: CandidatePointCalculator, model_updater: ModelUpdater,
+    def __init__(self, candidate_point_calculator: CandidatePointCalculator, model_updaters: List[ModelUpdater],
                  loop_state: LoopState = None) -> None:
         """
         :param candidate_point_calculator: Finds next points to evaluate by optimizing the acquisition function
-        :param model_updater: Updates the data in the model and the model hyper-parameters when we observe new data
+        :param model_updaters: Updates the data in the model and the model hyper-parameters when we observe new data
         :param loop_state: Object that keeps track of the history of the loop. Default: None, resulting in empty initial state
         """
         self.candidate_point_calculator = candidate_point_calculator
-        self.model_updater = model_updater
+        self.model_updaters = model_updaters
         self.loop_state = loop_state
         if self.loop_state is None:
             self.loop_state = LoopState([])
@@ -50,7 +50,7 @@ class OuterLoop(object):
             stopping_condition = FixedIterationsStoppingCondition(stopping_condition)
 
         while not stopping_condition.should_stop(self.loop_state):
-            self.model_updater.update(self.loop_state)
+            [mu.update(self.loop_state) for mu in self.model_updaters]
             new_x = self.candidate_point_calculator.compute_next_points(self.loop_state)
             results = user_function.evaluate(new_x)
             self.loop_state.update(results)
@@ -66,7 +66,7 @@ class OuterLoop(object):
         """
         if results:
             self.loop_state.update(results)
-            self.model_updater.update(self.loop_state)
+            [mu.update(self.loop_state) for mu in self.model_updater]
         return self.candidate_point_calculator.compute_next_points(self.loop_state)
 
     def custom_step(self) -> None:
