@@ -27,7 +27,6 @@ parser.add_argument("--n_init", default=2, type=int, nargs="?")
 
 args = parser.parse_args()
 
-
 if args.benchmark == "svm_mnist_surrogate":
     b = SurrogateSVM()
 
@@ -54,7 +53,6 @@ for h in cs.get_hyperparameters():
 
 space = ParameterSpace(list_params)
 
-
 if args.method == "gp_ei":
     init_design = RandomDesign(space)
     X_init = init_design.get_samples(args.n_init)
@@ -76,6 +74,11 @@ if args.method == "gp_ei":
     loop_state = LoopState(initial_results)
     bo.loop_state = loop_state
 
+    bo.run_loop(user_function=obj,
+                stopping_condition=FixedIterationsStoppingCondition(args.num_iterations - args.n_init))
+    C = bo.loop_state.C
+    Y = bo.loop_state.Y
+
 elif args.method == "gp_ei_per_cost":
     init_design = RandomDesign(space)
     X_init = init_design.get_samples(args.n_init)
@@ -94,34 +97,21 @@ elif args.method == "gp_ei_per_cost":
                                                space=space, X_init=X_init, Y_init=Y_init, C_init=C_init,
                                                acquisition=acquisition,
                                                candidate_point_calculator=candidate_point_calculator)
+    bo.run_loop(user_function=obj,
+                stopping_condition=FixedIterationsStoppingCondition(args.num_iterations - args.n_init))
+    C = bo.loop_state.C
+    Y = bo.loop_state.Y
 
-# elif args.method == "gp_ei_per_cost":
-#     init_design = RandomDesign(space)
-#     X_init = init_design.get_samples(args.n_init)
-#     Y_init, C_init = evaluate(X_init)
-#
-#     model = BOGP(X_init=X_init, Y_init=Y_init)
-#     cost_model = BOGP(X_init=X_init, Y_init=C_init)
-#
-#     acquisition = ExpectedImprovementPerCost(model, cost_model)
-#
-#     acquisition_optimizer = DirectOptimizer(space)
-#
-#     candidate_point_calculator = Sequential(acquisition, acquisition_optimizer)
-#
-#     bo = CostSensitiveBayesianOptimizationLoop(model_objective=model, model_cost=cost_model,
-#                                                space=space, X_init=X_init, Y_init=Y_init, C_init=C_init,
-#                                                acquisition=acquisition,
-#                                                candidate_point_calculator=candidate_point_calculator)
-
-bo.run_loop(user_function=obj, stopping_condition=FixedIterationsStoppingCondition(args.num_iterations - args.n_init))
-
+elif args.method == "rs":
+    init_design = RandomDesign(space)
+    X = init_design.get_samples(args.num_iterations)
+    Y, C = evaluate(X)
 
 curr_inc = np.inf
 curr_time = 0
 error = []
 runtime = []
-for yi, ci in zip(bo.loop_state.Y, bo.loop_state.C):
+for yi, ci in zip(Y, C):
     if curr_inc > yi:
         curr_inc = yi[0]
     error.append(curr_inc)
