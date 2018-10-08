@@ -139,6 +139,6 @@ os.makedirs(path, exist_ok=True)
 
 fname = os.path.join(path, "%s_run_%d.json" % (args.method, args.run_id))
 
-#fh = open(fname, "w")
-#json.dump(data, fh)
-#fh.close()
+fh = open(fname, "w")
+json.dump(data, fh)
+fh.close()
