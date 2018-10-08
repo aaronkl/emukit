@@ -12,7 +12,7 @@ from ..acquisitions import ExpectedImprovementPerCost
 
 class CostSensitiveBayesianOptimizationLoop(OuterLoop):
     def __init__(self, model_objective: IModel, model_cost: IModel,
-                 space: ParameterSpace, X_init: np.array, Y_init: np.array,
+                 space: ParameterSpace, X_init: np.array, Y_init: np.array, C_init: np.array,
                  acquisition: Acquisition = None, candidate_point_calculator: CandidatePointCalculator = None,
                  model_updater_objective: ModelUpdater = None, model_updater_cost: ModelUpdater = None):
 
@@ -25,6 +25,7 @@ class CostSensitiveBayesianOptimizationLoop(OuterLoop):
         :param acquisition: The acquisition function that will be used to collect new points (default, EI).
         :param X_init: x values for initial function evaluations
         :param Y_init: y values for initial function evaluations
+        :param C_init: costs for initial function evaluations
         :param model_updater_objective: Defines how and how often the model for the objective function
         will be updated if new data arrives (default, FixedIntervalUpdater)
         :param model_updater_cost: Defines how and how often the model for the cost function
@@ -47,7 +48,7 @@ class CostSensitiveBayesianOptimizationLoop(OuterLoop):
 
         initial_results = []
         for i in range(X_init.shape[0]):
-            initial_results.append(UserFunctionResult(X_init[i], Y_init[i]))
+            initial_results.append(UserFunctionResult(X_init[i], Y_init[i], C_init[i]))
         loop_state = LoopState(initial_results)
 
         super(CostSensitiveBayesianOptimizationLoop, self).__init__(candidate_point_calculator,
