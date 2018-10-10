@@ -1,1 +1,2 @@
 from .linear_multi_fidelity_kernel import LinearMultiFidelityKernel
+from .fabolas_kernel import FabolasKernel
