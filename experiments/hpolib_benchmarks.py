@@ -10,12 +10,11 @@ from emukit.bayesian_optimization.loops import BayesianOptimizationLoop, CostSen
 from emukit.core.loop import FixedIterationsStoppingCondition, UserFunctionWithCostWrapper, UserFunctionResult, \
     Sequential, LoopState
 from emukit.bayesian_optimization.acquisitions import ExpectedImprovement, ExpectedImprovementPerCost
-from emukit.models.bohamiann import Bohamiann
-from emukit.models.random_forest import RandomForest
-from emukit.models.dngo import DNGO
 from emukit.experimental_design.model_free.random_design import RandomDesign
 from emukit.core import ContinuousParameter, ParameterSpace
 from emukit.core.optimization import DirectOptimizer
+from emukit.bayesian_optimization.methods.fabolas import Fabolas
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--method", default="gp_ei", type=str, nargs="?")
@@ -29,6 +28,8 @@ args = parser.parse_args()
 
 if args.benchmark == "svm_mnist_surrogate":
     b = SurrogateSVM()
+    s_min = b.s_min
+    s_max = 50000
 
 
 def evaluate(X: np.ndarray):
@@ -39,10 +40,21 @@ def evaluate(X: np.ndarray):
         y.append(data["function_value"])
         c.append(data["cost"])
 
-    return np.array(y)[:, None], np.array(c)[:, None]
+    return np.array(y)[:, None], np.log(np.array(c)[:, None])
 
 
-obj = UserFunctionWithCostWrapper(evaluate)
+def evaluate_subsets(X: np.ndarray):
+    y = []
+    c = []
+    for xi in X:
+        s = (np.exp(xi[-1]) - s_min) / (s_max - s_min)
+        data = b.objective_function(xi[:-1], dataset_fraction=s)
+        y.append(data["function_value"])
+        c.append(data["cost"])
+
+    return np.array(y)[:, None], np.log(np.array(c)[:, None])
+
+
 
 cs = b.get_configuration_space()
 
@@ -54,6 +66,9 @@ for h in cs.get_hyperparameters():
 space = ParameterSpace(list_params)
 
 if args.method == "gp_ei":
+
+    obj = UserFunctionWithCostWrapper(evaluate)
+
     init_design = RandomDesign(space)
     X_init = init_design.get_samples(args.n_init)
     Y_init, C_init = evaluate(X_init)
@@ -80,6 +95,9 @@ if args.method == "gp_ei":
     Y = bo.loop_state.Y
 
 elif args.method == "gp_ei_per_cost":
+
+    obj = UserFunctionWithCostWrapper(evaluate)
+
     init_design = RandomDesign(space)
     X_init = init_design.get_samples(args.n_init)
     Y_init, C_init = evaluate(X_init)
@@ -102,7 +120,19 @@ elif args.method == "gp_ei_per_cost":
     C = bo.loop_state.C
     Y = bo.loop_state.Y
 
+elif args.method == "fabolas":
+
+    obj = UserFunctionWithCostWrapper(evaluate_subsets)
+
+    bo = Fabolas(obj, space, s_min=s_min, s_max=s_max, n_init=args.n_init)
+    bo.run_optimization(num_iterations=args.num_iterations - args.n_init)
+    # TODO: Return incumbent
+    C = bo.loop_state.C
+    Y = bo.loop_state.Y
+
+
 elif args.method == "rs":
+
     init_design = RandomDesign(space)
     X = init_design.get_samples(args.num_iterations)
     Y, C = evaluate(X)
