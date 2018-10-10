@@ -1,11 +1,12 @@
 import numpy as np
 
 from ...core.parameter_space import ParameterSpace, ContinuousParameter
-from ...core.loop import FixedIterationsStoppingCondition, UserFunctionWithCostWrapper
+from ...core.loop import FixedIterationsStoppingCondition, UserFunctionWithCostWrapper, Sequential
 from ..acquisitions import EntropySearchPerCost
 from ..loops import CostSensitiveBayesianOptimizationLoop
 from emukit.multi_fidelity.models.fabolas_model import FabolasModel, quad, linear
 from emukit.experimental_design.model_free.random_design import RandomDesign
+from emukit.core.optimization import DirectOptimizer
 
 
 class Fabolas(CostSensitiveBayesianOptimizationLoop):
@@ -32,9 +33,12 @@ class Fabolas(CostSensitiveBayesianOptimizationLoop):
         model_objective = FabolasModel(X_init, Y_init, basis_func=quad)
         model_cost = FabolasModel(X_init, C_init, basis_func=linear)
         es = EntropySearchPerCost(model=model_objective, cost_model=model_cost, space=space)
+        acquisition_optimizer = DirectOptimizer(space)
+
+        candidate_point_calculator = Sequential(es, acquisition_optimizer)
 
         super(Fabolas, self).__init__(X_init=X_init, Y_init=Y_init, C_init=C_init, space=space,
-                                      acquisition=es,
+                                      acquisition=es, candidate_point_calculator=candidate_point_calculator,
                                       model_objective=model_objective, model_cost=model_cost)
 
     def suggest_new_locations(self):
