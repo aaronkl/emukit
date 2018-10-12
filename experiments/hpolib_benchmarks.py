@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 if args.benchmark == "svm_mnist_surrogate":
     b = SurrogateSVM()
-    s_min = b.s_min
+    s_min = b.s_min * 50000
     s_max = 50000
 
 
@@ -47,13 +47,12 @@ def evaluate_subsets(X: np.ndarray):
     y = []
     c = []
     for xi in X:
-        s = (np.exp(xi[-1]) - s_min) / (s_max - s_min)
+        s = xi[-1] / s_max
         data = b.objective_function(xi[:-1], dataset_fraction=s)
         y.append(data["function_value"])
         c.append(data["cost"])
 
     return np.array(y)[:, None], np.log(np.array(c)[:, None])
-
 
 
 cs = b.get_configuration_space()
