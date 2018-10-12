@@ -91,7 +91,15 @@ if args.method == "gp_ei":
     bo.run_loop(user_function=obj,
                 stopping_condition=FixedIterationsStoppingCondition(args.num_iterations - args.n_init))
     C = bo.loop_state.C
-    Y = bo.loop_state.Y
+    incumbents = []
+    curr_inc = None
+    curr_inc_val = np.inf
+    for yi, xi in zip(bo.loop_state.Y, bo.loop_state.X):
+        if curr_inc_val > yi[0]:
+            curr_inc = xi
+            curr_inc_val = yi[0]
+        incumbents.append(curr_inc)
+
 
 elif args.method == "gp_ei_per_cost":
 
@@ -117,7 +125,14 @@ elif args.method == "gp_ei_per_cost":
     bo.run_loop(user_function=obj,
                 stopping_condition=FixedIterationsStoppingCondition(args.num_iterations - args.n_init))
     C = bo.loop_state.C
-    Y = bo.loop_state.Y
+    incumbents = []
+    curr_inc = None
+    curr_inc_val = np.inf
+    for yi, xi in zip(bo.loop_state.Y, bo.loop_state.X):
+        if curr_inc_val > yi[0]:
+            curr_inc = xi
+            curr_inc_val = yi[0]
+        incumbents.append(curr_inc)
 
 elif args.method == "fabolas":
 
@@ -127,7 +142,7 @@ elif args.method == "fabolas":
     bo.run_optimization(num_iterations=args.num_iterations - args.n_init)
     # TODO: Return incumbent
     C = bo.loop_state.C
-    Y = bo.loop_state.Y
+    incumbents = bo.incumbents
 
 
 elif args.method == "rs":
@@ -135,15 +150,23 @@ elif args.method == "rs":
     init_design = RandomDesign(space)
     X = init_design.get_samples(args.num_iterations)
     Y, C = evaluate(X)
+    incumbents = []
+    curr_inc = None
+    curr_inc_val = np.inf
+    for yi, xi in zip(Y, X):
+        if curr_inc_val > yi[0]:
+            curr_inc = xi
+            curr_inc_val = yi[0]
+        incumbents.append(curr_inc)
 
-curr_inc = np.inf
+
 curr_time = 0
 error = []
 runtime = []
-for yi, ci in zip(Y, C):
-    if curr_inc > yi:
-        curr_inc = yi[0]
-    error.append(curr_inc)
+for xi, ci in zip(incumbents, C):
+    print(xi)
+    yi = b.objective_function_test(xi)["function_value"]
+    error.append(yi)
 
     curr_time += ci[0]
     runtime.append(curr_time)
