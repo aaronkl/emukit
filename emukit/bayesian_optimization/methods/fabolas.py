@@ -1,4 +1,6 @@
 import numpy as np
+
+from copy import deepcopy
 from typing import List, Callable
 from ...core.parameter_space import ParameterSpace, ContinuousParameter
 from ...core.loop import FixedIterationsStoppingCondition, UserFunctionWithCostWrapper, Sequential
@@ -71,6 +73,8 @@ class Fabolas(CostSensitiveBayesianOptimizationLoop):
 
         candidate_point_calculator = Sequential(es, acquisition_optimizer)
 
+        self.incumbents = []
+
         super(Fabolas, self).__init__(X_init=X_init, Y_init=Y_init, C_init=C_init, space=space,
                                       acquisition=es, candidate_point_calculator=candidate_point_calculator,
                                       model_objective=model_objective, model_cost=model_cost)
@@ -85,3 +89,11 @@ class Fabolas(CostSensitiveBayesianOptimizationLoop):
         :param num_iterations: The number of iterations to run the Bayesian optimization loop.
         """
         self.run_loop(self.user_function, FixedIterationsStoppingCondition(num_iterations))
+
+    def custom_step(self):
+        # identify incumbent
+        proj_X = deepcopy(self.loop_state.X)
+        proj_X[:, -1] = np.ones(proj_X.shape[0])
+        mean_full_dataset, _ = self.model_updaters[0].model.predict(proj_X)
+        best = np.argmin(mean_full_dataset, axis=0)
+        self.incumbents.append(proj_X[best, :-1][0])
