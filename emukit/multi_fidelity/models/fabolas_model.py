@@ -17,9 +17,19 @@ def quad(s):
     return (1 - s) ** 2
 
 
+def transform(s, s_min, s_max):
+    s_transform = (np.log2(s) - np.log2(s_min)) / (np.log2(s_max) - np.log2(s_min))
+    return s_transform
+
+
+def retransform(s_transform, s_min, s_max):
+    s = np.rint(2**(s_transform * (np.log2(s_max) - np.log2(s_min)) + np.log2(s_min)))
+    return s
+
+
 class FabolasModel(IModel, IDifferentiable, IEntropySearchModel):
 
-    def __init__(self, X_init, Y_init, basis_func=linear, noise=1e-10):
+    def __init__(self, X_init, Y_init, s_min, s_max, basis_func=linear, noise=1e-6):
         """
         Fabolas Gaussian processes model. Note: we assume s \in [0, 1] to be the dataset fraction on a log scale.
         Also it should be the last dimension (along axis=1) of X_init.
@@ -33,8 +43,10 @@ class FabolasModel(IModel, IDifferentiable, IEntropySearchModel):
         super(FabolasModel, self).__init__()
 
         self.noise = noise
-
-        self._X = X_init
+        self.s_min = s_min
+        self.s_max = s_max
+        self._X = deepcopy(X_init)
+        self._X[:, -1] = transform(self._X[:, -1], self.s_min, self.s_max)
         self._Y = Y_init
         self.basis_func = basis_func
         kernel = GPy.kern.Matern52(input_dim=self.X.shape[1] - 1, active_dims=[i for i in range(self.X.shape[1] - 1)],
@@ -46,15 +58,31 @@ class FabolasModel(IModel, IDifferentiable, IEntropySearchModel):
         self.gp.likelihood.constrain_positive()
 
     def optimize(self, num_restarts=3, verbose=False):
+        self.gp.likelihood.constrain_fixed(self.noise)
+        self.gp.optimize_restarts(messages=verbose, num_restarts=num_restarts, robust=True)
+        self.gp.likelihood.constrain_positive()
         self.gp.optimize_restarts(messages=verbose, num_restarts=num_restarts, robust=True)
 
     def predict(self, X):
-        return self.gp.predict(X)
+        X_ = deepcopy(X)
+        X_[:, -1] = transform(X_[:, -1], self.s_min, self.s_max)
+        m, v = self.gp.predict(X_)
+        return m, v
 
     def update_data(self, X, Y):
-        self._X = X
+        self._X = deepcopy(X)
+        self._X[:, -1] = transform(self._X[:, -1], self.s_min, self.s_max)
         self._Y = Y
-        self.gp.set_XY(self.X, self.Y)
+        try:
+            self.gp.set_XY(self.X, self.Y)
+        except:
+            kernel = GPy.kern.Matern52(input_dim=self.X.shape[1] - 1, active_dims=[i for i in range(self.X.shape[1] - 1)],
+                                   variance=np.var(self.Y), ARD=True)
+            kernel *= FabolasKernel(input_dim=1, active_dims=[self.X.shape[1] - 1], basis_func=self.basis_func)
+        # kernel *= GPy.kern.OU(input_dim=1, active_dims=[self.X.shape[1] - 1])
+
+            self.gp = GPy.models.GPRegression(self.X, self.Y, kernel=kernel, noise_var=self.noise)
+            self.gp.likelihood.constrain_positive()
 
     def get_f_minimum(self):
         proj_X = deepcopy(self.X)
@@ -78,7 +106,10 @@ class FabolasModel(IModel, IDifferentiable, IEntropySearchModel):
                  distribution at each input location
         """
         # X_ = (X - self.X_mean) / self.X_std
-        X_ = X
+        # X_ = X
+        X_ = deepcopy(X)
+        X_[:, -1] = transform(X_[:, -1], self.s_min, self.s_max)
+
         d_mean_dx, d_variance_dx = self.gp.predictive_gradients(X_)
         return d_mean_dx[:, :, 0], d_variance_dx
 
@@ -89,7 +120,9 @@ class FabolasModel(IModel, IDifferentiable, IEntropySearchModel):
         :param with_noise: Whether to include likelihood noise in the covariance matrix
         :return: Posterior covariance matrix of size n_points x n_points
         """
-        _, v = self.gp.predict(X, full_cov=True, include_likelihood=with_noise)
+        X_ = deepcopy(X)
+        X_[:, -1] = transform(X_[:, -1], self.s_min, self.s_max)
+        _, v = self.gp.predict(X_, full_cov=True, include_likelihood=with_noise)
         v = np.clip(v, 1e-10, np.inf)
 
         return v
@@ -103,4 +136,8 @@ class FabolasModel(IModel, IDifferentiable, IEntropySearchModel):
                    argument to the posterior covariance function.
         :return: An array of shape n_points x 1 of posterior covariances between X1 and X2
         """
-        return self.gp.posterior_covariance_between_points(X1, X2)
+        X_1 = deepcopy(X1)
+        X_1[:, -1] = transform(X_1[:, -1], self.s_min, self.s_max)
+        X_2 = deepcopy(X2)
+        X_2[:, -1] = transform(X_2[:, -1], self.s_min, self.s_max)
+        return self.gp.posterior_covariance_between_points(X_1, X_2)
