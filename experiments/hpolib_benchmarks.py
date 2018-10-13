@@ -140,7 +140,6 @@ elif args.method == "fabolas":
 
     bo = Fabolas(obj, space, s_min=s_min, s_max=s_max, n_init=args.n_init)
     bo.run_optimization(num_iterations=args.num_iterations - args.n_init)
-    # TODO: Return incumbent
     C = bo.loop_state.C
     incumbents = bo.incumbents
 
@@ -164,11 +163,10 @@ curr_time = 0
 error = []
 runtime = []
 for xi, ci in zip(incumbents, C):
-    print(xi)
     yi = b.objective_function_test(xi)["function_value"]
     error.append(yi)
 
-    curr_time += ci[0]
+    curr_time += np.exp(ci[0])
     runtime.append(curr_time)
 
 data = dict()
@@ -176,6 +174,7 @@ data["error"] = error
 data["runtime"] = runtime
 
 print(error, runtime)
+
 path = os.path.join(args.output_path, args.benchmark)
 os.makedirs(path, exist_ok=True)
 
