@@ -9,7 +9,7 @@ from emukit.models.bo_gp import BOGP
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop, CostSensitiveBayesianOptimizationLoop
 from emukit.core.loop import FixedIterationsStoppingCondition, UserFunctionWithCostWrapper, UserFunctionResult, \
     Sequential, LoopState
-from emukit.bayesian_optimization.acquisitions import ExpectedImprovement, ExpectedImprovementPerCost
+from emukit.bayesian_optimization.acquisitions import ExpectedImprovement, ExpectedImprovementPerCost, LogExpectedImprovement
 from emukit.experimental_design.model_free.random_design import RandomDesign
 from emukit.core import ContinuousParameter, ParameterSpace
 from emukit.core.optimization import DirectOptimizer
@@ -74,7 +74,7 @@ if args.method == "gp_ei":
 
     model = BOGP(X_init=X_init, Y_init=Y_init)
 
-    acquisition = ExpectedImprovement(model)
+    acquisition = LogExpectedImprovement(model)
 
     acquisition_optimizer = DirectOptimizer(space)
 
@@ -99,7 +99,6 @@ if args.method == "gp_ei":
             curr_inc = xi
             curr_inc_val = yi[0]
         incumbents.append(curr_inc)
-
 
 elif args.method == "gp_ei_per_cost":
 
