@@ -13,6 +13,7 @@ from emukit.bayesian_optimization.acquisitions import ExpectedImprovement, Expec
 from emukit.experimental_design.model_free.random_design import RandomDesign
 from emukit.core import ContinuousParameter, ParameterSpace
 from emukit.core.optimization import DirectOptimizer
+from emukit.core.optimization.differential_evolution import DifferentialEvolution
 from emukit.bayesian_optimization.methods.fabolas import Fabolas
 
 
@@ -76,8 +77,8 @@ if args.method == "gp_ei":
 
     acquisition = LogExpectedImprovement(model)
 
-    acquisition_optimizer = DirectOptimizer(space)
-
+    # acquisition_optimizer = DirectOptimizer(space)
+    acquisition_optimizer = DifferentialEvolution(space)
     candidate_point_calculator = Sequential(acquisition, acquisition_optimizer)
 
     bo = BayesianOptimizationLoop(model=model, space=space, X_init=X_init, Y_init=Y_init, acquisition=acquisition,
@@ -113,8 +114,7 @@ elif args.method == "gp_ei_per_cost":
 
     acquisition = ExpectedImprovementPerCost(model, cost_model)
 
-    acquisition_optimizer = DirectOptimizer(space)
-
+    acquisition_optimizer = DifferentialEvolution(space)
     candidate_point_calculator = Sequential(acquisition, acquisition_optimizer)
 
     bo = CostSensitiveBayesianOptimizationLoop(model_objective=model, model_cost=cost_model,
