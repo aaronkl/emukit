@@ -28,15 +28,27 @@ class Fabolas(CostSensitiveBayesianOptimizationLoop):
         self.user_function = user_function
 
         init_design = RandomDesign(space)
-        X_init = init_design.get_samples(n_init)
+
         subsets = [s_max / s_sub for s_sub in [256, 128, 64, 32]]
+
+        n_init = np.max([n_init, len((subsets))])
+        n_init_point = n_init // len(subsets)
+        cands = init_design.get_samples(n_init_point)
         # TODO: check that subsets are larger than smin
         # s = np.array(subsets)
         s = np.zeros([n_init])
-        for i in range(n_init):
+        X_init = np.zeros([n_init, cands.shape[1] + 1])
+
+        idx = 0
+        for i in range(n_init_point):
             # s[i] = transform(subsets[i % len(subsets)], s_min, s_max)
-            s[i] = subsets[i % len(subsets)]
-        X_init = np.append(X_init, s[:, None], axis=1)
+            # s[i] = subsets[i % len(subsets)]
+            for subset in subsets:
+                X_init[idx] = np.append(cands[i], [subset])
+                idx += 1
+
+        # X_init = np.append(X_init, s[:, None], axis=1)
+
 
         C_init = []
         Y_init = []
@@ -86,4 +98,5 @@ class Fabolas(CostSensitiveBayesianOptimizationLoop):
         proj_X[:, -1] = np.ones(proj_X.shape[0]) * self.s_max
         mean_full_dataset, _ = self.model_updaters[0].model.predict(proj_X)
         best = np.argmin(mean_full_dataset, axis=0)
+
         self.incumbents.append(proj_X[best, :-1][0])
