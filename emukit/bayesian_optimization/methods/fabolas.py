@@ -8,8 +8,9 @@ from ..acquisitions import EntropySearchPerCost
 from ..loops import CostSensitiveBayesianOptimizationLoop
 from emukit.multi_fidelity.models.fabolas_model import FabolasModel, quad, linear
 from emukit.experimental_design.model_free.random_design import RandomDesign
-from emukit.core.optimization import DirectOptimizer
+# from emukit.core.optimization import DirectOptimizer
 from emukit.core.loop import UserFunctionWithCostWrapper, UserFunctionResult, UserFunction
+from emukit.core.optimization.differential_evolution import DifferentialEvolution
 
 
 class Fabolas(CostSensitiveBayesianOptimizationLoop):
@@ -73,7 +74,7 @@ class Fabolas(CostSensitiveBayesianOptimizationLoop):
         model_objective = FabolasModel(X_init, Y_init, s_min, s_max, basis_func=quad)
         model_cost = FabolasModel(X_init, C_init, s_min, s_max, basis_func=linear)
         es = EntropySearchPerCost(model=model_objective, cost_model=model_cost, space=space)
-        acquisition_optimizer = DirectOptimizer(space)
+        acquisition_optimizer = DifferentialEvolution(space)
 
         candidate_point_calculator = Sequential(es, acquisition_optimizer)
 
@@ -93,6 +94,9 @@ class Fabolas(CostSensitiveBayesianOptimizationLoop):
         self.run_loop(self.user_function, FixedIterationsStoppingCondition(num_iterations))
 
     def custom_step(self):
+        # update pmin
+        self.candidate_point_calculator.acquisition.es.need_update = True
+
         # identify incumbent
         proj_X = deepcopy(self.loop_state.X)
         proj_X[:, -1] = np.ones(proj_X.shape[0]) * self.s_max
