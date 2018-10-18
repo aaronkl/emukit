@@ -52,9 +52,9 @@ class FabolasModel(IModel, IDifferentiable, IEntropySearchModel):
         kernel = GPy.kern.Matern52(input_dim=self.X.shape[1] - 1, active_dims=[i for i in range(self.X.shape[1] - 1)],
                                    variance=np.var(self.Y), ARD=True)
         kernel *= FabolasKernel(input_dim=1, active_dims=[self.X.shape[1] - 1], basis_func=basis_func)
-        kernel *= GPy.kern.OU(input_dim=1, active_dims=[self.X.shape[1] - 1])
-
-        self.gp = GPy.models.GPRegression(self.X, self.Y, kernel=kernel, noise_var=noise)
+        # kernel *= GPy.kern.OU(input_dim=1, active_dims=[self.X.shape[1] - 1])
+        kernel += GPy.kern.White(input_dim=1, active_dims=[self.X.shape[1] - 1], variance=1e-6)
+        self.gp = GPy.models.GPRegression(self.X, np.log(self.Y), kernel=kernel, noise_var=noise)
         self.gp.likelihood.constrain_positive()
 
     def optimize(self, num_restarts=3, verbose=False):
