@@ -84,6 +84,7 @@ class EntropySearch(Acquisition):
         self.representer_points = None
         self.representer_points_log = None
         self.logP = None
+        self.need_update = True
 
     def _sample_representer_points(self) -> tuple:
         """ Samples a new set of representer points from the proposal measurement"""
@@ -135,8 +136,9 @@ class EntropySearch(Acquisition):
 
         :param x: points where the acquisition is evaluated.
         """
-        if not self._required_parameters_initialized():
+        if not self._required_parameters_initialized() or self.need_update:
             self.update_pmin()
+            self.need_update = False
 
         # Check if we want to compute the acquisition function for multiple inputs
         if x.shape[0] > 1:
