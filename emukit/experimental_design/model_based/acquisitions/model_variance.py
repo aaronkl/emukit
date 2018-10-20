@@ -1,3 +1,7 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 from typing import Tuple, Union
 
 import numpy as np
@@ -23,6 +27,7 @@ class ModelVariance(Acquisition):
         _, variance = self.model.predict(x)
         _, dvariance_dx = self.model.get_prediction_gradients(x)
         return variance, dvariance_dx
-    
+
+    @property
     def has_gradients(self):
         return isinstance(self.model, IDifferentiable)

@@ -1,3 +1,7 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 """
 Contains integrated variance acquisition
 """
@@ -54,5 +58,6 @@ class IntegratedVarianceReduction(Acquisition):
 
         return integrated_variance
 
+    @property
     def has_gradients(self):
         return False

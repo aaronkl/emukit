@@ -1,3 +1,7 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 from typing import Union
 
 import scipy
@@ -7,7 +11,7 @@ from ...core.acquisition import Acquisition
 from ...core.interfaces import IModel, IDifferentiable
 from ...core.parameter_space import ParameterSpace
 
-from emukit.bayesian_optimization.acquisitions.expected_improvement import ExpectedImprovement
+from ..acquisitions import ExpectedImprovement
 from ..interfaces import IEntropySearchModel
 from ..util import epmgp
 from ..util.mcmc_sampler import AffineInvariantEnsembleSampler, McmcSampler
@@ -15,7 +19,7 @@ from ..util.mcmc_sampler import AffineInvariantEnsembleSampler, McmcSampler
 
 class EntropySearch(Acquisition):
 
-    def __init__(self, model: Union[IModel, IDifferentiable, IEntropySearchModel], space: ParameterSpace, sampler: McmcSampler = None,
+    def __init__(self, model: Union[IModel, IEntropySearchModel], space: ParameterSpace, sampler: McmcSampler = None,
                  num_samples: int = 400, num_representer_points: int = 50,
                  proposal_function: Acquisition = None, burn_in_steps: int = 50) -> None:
 
@@ -64,11 +68,7 @@ class EntropySearch(Acquisition):
                 else:
                     x_ = x
                 if self.space.check_points_in_domain(x_):
-                    a = ei.evaluate(x_)[0]
-                    if np.isnan(a):
-                        return np.array([np.NINF])
-                    else:
-                        return a
+                    return np.log(np.clip(ei.evaluate(x_)[0], 0., np.PINF))
                 else:
                     return np.array([np.NINF])
 
@@ -200,6 +200,7 @@ class EntropySearch(Acquisition):
         dv_rep = -dm_rep.dot(dm_rep.T)
         return dm_rep, dv_rep
 
+    @property
     def has_gradients(self) -> bool:
         """Returns that this acquisition has gradients"""
         return False

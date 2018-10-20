@@ -1,25 +1,12 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 from typing import List
 
 import numpy as np
 
 from .user_function_result import UserFunctionResult
-
-
-def create_loop_state(x_init: np.ndarray, y_init: np.ndarray) -> None:
-    """
-    Creates a loop state object using the provided data
-
-    :param x_init: x values for initial function evaluations.
-    :param y_init: y values for initial function evaluations
-    """
-    if x_init.shape[0] != y_init.shape[0]:
-        error_message = "X and Y should have the same length. Actual length x_init {}, y_init {}".format(x_init.shape[0], y_init.shape[0])
-        raise ValueError(error_message)
-
-    initial_results = []
-    for x, y in zip(x_init, y_init):
-        initial_results.append(UserFunctionResult(x, y))
-    return LoopState(initial_results)
 
 
 class LoopState(object):
@@ -66,3 +53,19 @@ class LoopState(object):
                  in a 2d array: number of points by cost dimensions.
         """
         return np.array([result.C for result in self.results])
+
+def create_loop_state(x_init: np.ndarray, y_init: np.ndarray) -> LoopState:
+    """
+    Creates a loop state object using the provided data
+
+    :param x_init: x values for initial function evaluations.
+    :param y_init: y values for initial function evaluations
+    """
+    if x_init.shape[0] != y_init.shape[0]:
+        error_message = "X and Y should have the same length. Actual length x_init {}, y_init {}".format(x_init.shape[0], y_init.shape[0])
+        raise ValueError(error_message)
+
+    initial_results = []
+    for x, y in zip(x_init, y_init):
+        initial_results.append(UserFunctionResult(x, y))
+    return LoopState(initial_results)

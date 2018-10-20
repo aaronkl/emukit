@@ -1,3 +1,7 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 from typing import Tuple, Union
 
 from GPyOpt.util.general import get_quantiles
@@ -65,6 +69,7 @@ class ExpectedImprovement(Acquisition):
 
         return improvement, dimprovement_dx
 
+    @property
     def has_gradients(self) -> bool:
         """Returns that this acquisition has gradients"""
-        return True
+        return isinstance(self.model, IDifferentiable)

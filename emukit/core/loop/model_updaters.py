@@ -1,8 +1,15 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 import abc
 
 from . import LoopState
 from ..interfaces import IModel
 
+
+import logging
+_log = logging.getLogger(__name__)
 
 class ModelUpdater(abc.ABC):
     @abc.abstractmethod
@@ -31,4 +38,5 @@ class FixedIntervalUpdater(ModelUpdater):
         """
         self.model.update_data(loop_state.X, loop_state.Y)
         if (loop_state.iteration % self.interval) == 0:
+            _log.info("Updating parameters of the model")
             self.model.optimize()

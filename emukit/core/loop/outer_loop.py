@@ -1,3 +1,7 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 from typing import List, Union, Callable
 
 import numpy as np
@@ -9,6 +13,9 @@ from .model_updaters import ModelUpdater
 from .user_function import UserFunction, UserFunctionWrapper
 from .stopping_conditions import StoppingCondition, FixedIterationsStoppingCondition
 
+
+import logging
+_log = logging.getLogger(__name__)
 
 class OuterLoop(object):
     """
@@ -49,12 +56,17 @@ class OuterLoop(object):
         if isinstance(stopping_condition, int):
             stopping_condition = FixedIterationsStoppingCondition(stopping_condition)
 
+        _log.info("Starting outer loop")
+
         while not stopping_condition.should_stop(self.loop_state):
+            _log.info("Iteration {}".format(self.loop_state.iteration))
             [mu.update(self.loop_state) for mu in self.model_updaters]
             new_x = self.candidate_point_calculator.compute_next_points(self.loop_state)
             results = user_function.evaluate(new_x)
             self.loop_state.update(results)
             self.custom_step()
+
+        _log.info("Finished outer loop")
 
     def get_next_points(self, results: List[UserFunctionResult]) -> np.ndarray:
         """

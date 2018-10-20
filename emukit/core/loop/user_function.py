@@ -1,3 +1,7 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+
 """
 This file contains the "UserFunction" base class and implementations
 
@@ -12,6 +16,9 @@ import numpy as np
 
 from .user_function_result import UserFunctionResult
 
+
+import logging
+_log = logging.getLogger(__name__)
 
 class UserFunction(abc.ABC):
     """ The user supplied function is interrogated as part of the outer loop """
@@ -39,6 +46,7 @@ class UserFunctionWrapper(UserFunction):
         if inputs.ndim != 2:
             raise ValueError("User function should receive 2d array as an input, actual input dimensionality is {}".format(inputs.ndim))
 
+        _log.info("Evaluating user function for {} point(s)".format(inputs.shape[0]))
         outputs = self.f(inputs)
 
         if outputs.ndim != 2:
@@ -49,6 +57,48 @@ class UserFunctionWrapper(UserFunction):
             results.append(UserFunctionResult(x, y))
         return results
 
+class MultiSourceFunctionWrapper(UserFunction):
+    """
+    Wraps a list of python functions that each correspond to different information source.
+    """
+
+    def __init__(self, f: List, source_index: int=-1) -> None:
+        """
+        :param f: A list of python function that take in a 2d numpy ndarrays of inputs and return 2d numpy ndarrays
+                  of outputs.
+        :param source_index: An integer indicating which column of X contains the index of the information source.
+                             Default to the last dimension of the input.
+        """
+        self.f = f
+        self.source_index = source_index
+
+    def evaluate(self, inputs: np.ndarray) -> List[UserFunctionResult]:
+        """
+        Evaluates the python functions corresponding to the appropriate information source
+
+        :param inputs: A list of inputs to evaluate the function at with information source index appended as last column
+        :return: A list of function outputs
+        """
+
+        if inputs.ndim != 2:
+            raise ValueError("User function should receive 2d array as an input, actual input dimensionality is {}".format(inputs.ndim))
+
+        n_sources = len(self.f)
+
+        _log.info("Evaluating multi-source user function for {} point(s)".format(inputs.shape[0]))
+        # Run each source function for all inputs at that source
+        outputs = []
+        for i_source in range(n_sources):
+            # Find inputs at that source
+            is_this_source = inputs[:, self.source_index] == i_source
+            this_source_inputs = np.delete(inputs[is_this_source, :], self.source_index, axis=1)
+            outputs.append(self.f[i_source](this_source_inputs))
+
+        outputs_array = np.concatenate(outputs, axis=0)
+        results = []
+        for x, y in zip(inputs, outputs_array):
+            results.append(UserFunctionResult(x, y))
+        return results
 
 class UserFunctionWithCostWrapper(UserFunction):
     def __init__(self, f: Callable):
@@ -86,3 +136,4 @@ class UserFunctionWithCostWrapper(UserFunction):
         for x, y, c in zip(inputs, outputs, costs):
             results.append(UserFunctionResult(x, y, c))
         return results
+
