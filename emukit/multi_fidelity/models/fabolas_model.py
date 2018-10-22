@@ -6,7 +6,7 @@ from copy import deepcopy
 
 from emukit.core.interfaces.models import IModel, IDifferentiable
 from emukit.bayesian_optimization.interfaces import IEntropySearchModel
-from emukit.multi_fidelity.kernels import FabolasKernel
+from emukit.multi_fidelity.kernels.fabolas_kernel import FabolasKernel
 
 
 def linear(s):
