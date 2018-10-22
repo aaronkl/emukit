@@ -2,7 +2,7 @@ import numpy as np
 
 from GPy.testing.kernel_tests import check_kernel_gradient_functions
 
-from emukit.multi_fidelity.kernels import FabolasKernel
+from emukit.multi_fidelity.kernels.fabolas_kernel import FabolasKernel
 from emukit.multi_fidelity.models.fabolas_model import quad
 
 
