@@ -26,6 +26,6 @@ class DifferentialEvolution(object):
         """
         bounds = list(zip(self.lower, self.upper))
 
-        res = sp.optimize.differential_evolution(self._acquisition_fkt_wrapper(acquisition), bounds)
+        res = sp.optimize.differential_evolution(self._acquisition_fkt_wrapper(acquisition), bounds, maxiter=20)
 
         return res["x"][None, :], None
