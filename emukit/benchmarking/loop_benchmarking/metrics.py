@@ -57,6 +57,26 @@ class MinimumObservedValueMetric(Metric):
         return y_min
 
 
+class CumulativeCostMetric(Metric):
+    """
+    The result is stored in the "metrics" dictionary in the loop state with the key "cumulative_costs"
+    """
+    def __init__(self, name: str='cumulative_costs'):
+        self.name = name
+        self.cumulative_costs = np.array([0.0])
+
+    def evaluate(self, loop: OuterLoop, loop_state: LoopState) -> np.ndarray:
+        """
+        Accumulates the cost of each function evaluation
+
+        :param loop: Outer loop
+        :param loop_state: Object containing history of the loop that we add results to
+        """
+        if loop_state.cost[-1] is not None:
+            self.cumulative_costs += loop_state.cost[-1]
+        return self.cumulative_costs
+
+
 class TimeMetric(Metric):
     """
     Time taken between each iteration of the loop
