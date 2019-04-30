@@ -1,0 +1,65 @@
+import os
+import argparse
+import pickle
+
+from emukit.examples.profet.meta_benchmarks import meta_svm
+
+from emukit.examples.gp_bayesian_optimization.enums import ModelType, AcquisitionType
+from emukit.examples.gp_bayesian_optimization.optimization_loops import create_bayesian_optimization_loop
+from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
+from emukit.benchmarking.loop_benchmarking.benchmarker import Benchmarker
+from emukit.benchmarking.loop_benchmarking.metrics import MinimumObservedValueMetric, TimeMetric, CumulativeCostMetric
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--run_id', default=0, type=int, nargs='?')
+parser.add_argument('--output_path', default="./", type=str, nargs='?')
+parser.add_argument('--sample_path', default="./", type=str, nargs='?')
+parser.add_argument('--n_iters', default=50, type=int, nargs='?')
+parser.add_argument('--n_repeats', default=20, type=int, nargs='?')
+parser.add_argument('--n_init', default=2, type=int, nargs='?')
+parser.add_argument('--benchmark', default="meta_svm", type=str, nargs='?')
+parser.add_argument('--model_type', default="gp", type=str, nargs='?')
+parser.add_argument('--acquisition_type', default="ei", type=str, nargs='?')
+parser.add_argument('--instance_id', default=0, type=int, nargs='?')
+parser.add_argument('--noise', action='store_true')
+
+args = parser.parse_args()
+
+if args.benchmark == "meta_svm":
+
+    fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
+    fname_cost = os.path.join(args.sample_path, "sample_cost_%d.pkl" % args.instance_id)
+    fcn, parameter_space = meta_svm(fname_objective=fname_objective,
+                                    fname_cost=fname_cost,
+                                    noise=args.noise)
+
+name = args.model_type + "_" + args.acquisition_type
+
+if args.acquisition_type == "ei":
+    acquisition = AcquisitionType.EI
+elif args.acquisition_type == "pi":
+    acquisition = AcquisitionType.PI
+elif args.acquisition_type == "nlcb":
+    acquisition = AcquisitionType.NLCB
+
+if args.model_type == "rf":
+    loops = [(name, lambda s: create_bayesian_optimization_loop(s.X, s.Y, s.cost, parameter_space,
+                                                                acquisition,
+                                                                ModelType.RandomForest))]
+elif args.model_type == "bnn":
+    loops = [(name, lambda s: create_bayesian_optimization_loop(s.X, s.Y, s.cost, parameter_space,
+                                                                acquisition,
+                                                                ModelType.BayesianNeuralNetwork))]
+elif args.model_type == "gp":
+    loops = [(name, lambda s: GPBayesianOptimization(parameter_space.parameters, s.X, s.Y,
+                                                     acquisition_type=acquisition, noiseless=False))]
+
+metrics = [MinimumObservedValueMetric(), TimeMetric(), CumulativeCostMetric()]
+
+benchmarkers = Benchmarker(loops, fcn, parameter_space, metrics=metrics)
+benchmark_results = benchmarkers.run_benchmark(n_iterations=args.n_iters,
+                                               n_initial_data=args.n_init,
+                                               n_repeats=args.n_repeats)
+
+fh = open("%s_results.pkl" % name, "wb")
+pickle.dump(benchmark_results, fh)
