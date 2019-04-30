@@ -13,10 +13,13 @@ from emukit.examples.profet.meta_benchmarks.architecture import get_architecture
 def meta_svm(fname_objective: str, fname_cost: str, noise: bool=True) -> Tuple[UserFunctionWrapper, ParameterSpace]:
     """
 
-    :param high_noise_std_deviation: Standard deviation of Gaussian observation noise on high fidelity observations.
-                                     Defaults to zero.
-    :param low_noise_std_deviation: Standard deviation of Gaussian observation noise on low fidelity observations.
-                                     Defaults to zero.
+    Interface to the MetaSVM benchmark described in:
+
+    Meta-Surrogate Benchmarking for Hyperparameter Optimization
+
+    :param fname_objective: filename for the objective function
+    :param fname_cost: filename for the cost function
+    :param noise: determines whether to add noise on the function value or not
     :return: Tuple of user function object and parameter space
     """
     parameter_space = ParameterSpace([
