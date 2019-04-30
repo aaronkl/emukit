@@ -8,12 +8,13 @@ from ...core.loop.loop_state import create_loop_state
 from ...core.optimization import AcquisitionOptimizer
 from ..models.bohamiann import Bohamiann
 from ..models.random_forest import RandomForest
+from ...model_wrappers.gpy_model_wrappers import GPyModelWrapper
 from .enums import AcquisitionType, ModelType
 
 
-def create_bayesian_optimization_loop(x_init: np.ndarray, y_init: np.ndarray, parameter_space: ParameterSpace,
-                                      acquisition_type: AcquisitionType, model_type: ModelType,
-                                      model_kwargs: dict=None) -> OuterLoop:
+def create_bayesian_optimization_loop(x_init: np.ndarray, y_init: np.ndarray, cost_init: np.ndarray,
+                                      parameter_space: ParameterSpace, acquisition_type: AcquisitionType,
+                                      model_type: ModelType, model_kwargs: dict=None) -> OuterLoop:
     """
     Creates Bayesian optimization loop for Bayesian neural network or random forest models.
 
@@ -34,6 +35,8 @@ def create_bayesian_optimization_loop(x_init: np.ndarray, y_init: np.ndarray, pa
         model = RandomForest(x_init, y_init, **model_kwargs)
     elif model_type is ModelType.BayesianNeuralNetwork:
         model = Bohamiann(x_init, y_init, **model_kwargs)
+    elif model_type is ModelType.GaussianProcess:
+        model = GPyModelWrapper(x_init, y_init, **model_kwargs)
     else:
         raise ValueError('Unrecognised model type: ' + str(model_type))
 
@@ -49,6 +52,6 @@ def create_bayesian_optimization_loop(x_init: np.ndarray, y_init: np.ndarray, pa
 
     acquisition_optimizer = AcquisitionOptimizer(parameter_space)
     candidate_point_calculator = SequentialPointCalculator(acquisition, acquisition_optimizer)
-    loop_state = create_loop_state(x_init, y_init)
+    loop_state = create_loop_state(x_init, y_init, cost_init)
     model_updater = FixedIntervalUpdater(model, 1)
     return OuterLoop(candidate_point_calculator, model_updater, loop_state)

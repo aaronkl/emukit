@@ -10,3 +10,4 @@ class AcquisitionType(Enum):
 class ModelType(Enum):
     RandomForest = 1
     BayesianNeuralNetwork = 2
+    GaussianProcess = 3
