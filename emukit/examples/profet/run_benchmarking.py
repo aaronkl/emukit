@@ -61,5 +61,12 @@ benchmark_results = benchmarkers.run_benchmark(n_iterations=args.n_iters,
                                                n_initial_data=args.n_init,
                                                n_repeats=args.n_repeats)
 
-fh = open("%s_results.pkl" % name, "wb")
+if bool(args.noise):
+    output_path = os.path.join(args.output_path, args.benchmark + "_noise", name, "instance_%d" % args.instance_id)
+else:
+    output_path = os.path.join(args.output_path, args.benchmark + "_noiseless", name, "instance_%d" % args.instance_id)
+os.makedirs(output_path, exist_ok=True)
+
+
+fh = open(os.path.join(output_path, "results.pkl"), "wb")
 pickle.dump(benchmark_results, fh)
