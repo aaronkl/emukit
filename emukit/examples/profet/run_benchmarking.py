@@ -68,5 +68,5 @@ else:
 os.makedirs(output_path, exist_ok=True)
 
 
-fh = open(os.path.join(output_path, "results.pkl"), "wb")
+fh = open(os.path.join(output_path, "run_%d.pkl" % args.run_id), "wb")
 pickle.dump(benchmark_results, fh)
