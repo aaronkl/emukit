@@ -2,7 +2,7 @@ import os
 import argparse
 import pickle
 
-from emukit.examples.profet.meta_benchmarks import meta_svm
+from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester
 
 from emukit.examples.gp_bayesian_optimization.enums import ModelType, AcquisitionType
 from emukit.examples.gp_bayesian_optimization.optimization_loops import create_bayesian_optimization_loop
@@ -25,7 +25,12 @@ parser.add_argument('--noise', action='store_true')
 
 args = parser.parse_args()
 
-if args.benchmark == "meta_svm":
+if args.benchmark == "meta_forrester":
+
+    fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
+    fcn, parameter_space = meta_forrester(fname_objective=fname_objective)
+
+elif args.benchmark == "meta_svm":
 
     fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
     fname_cost = os.path.join(args.sample_path, "sample_cost_%d.pkl" % args.instance_id)
