@@ -51,7 +51,7 @@ def get_default_network(input_dimensionality: int) -> torch.nn.Module:
 
 class Bohamiann(IModel, IDifferentiable):
 
-    def __init__(self, X_init, Y_init, **kwargs):
+    def __init__(self, X_init, Y_init, lr=1e-3, num_burnin=5000, num_steps=10000, **kwargs):
         """
         Implements Bayesian neural networks as described by Springenberg et. al[1] based on
         stochastic gradient Hamiltonian monte carlo sampling[2].

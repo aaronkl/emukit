@@ -132,3 +132,41 @@ class MultiSourceFunctionWrapper(UserFunction):
         for x, y, c in zip(inputs, outputs_array[sort_indices], costs_array[sort_indices]):
             results.append(UserFunctionResult(x, y, c))
         return results
+
+class UserFunctionWithCostWrapper(UserFunction):
+    def __init__(self, f: Callable):
+        """
+        Wraps a user-provided python function, which returns the function value as well as
+        the cost for evaluating the function.
+
+        :param f: A python function that takes in a 2d numpy ndarray of inputs and returns
+            two 2d numpy ndarray for the actual function value and the cost.
+        """
+        self.f = f
+
+    def evaluate(self, inputs: np.ndarray) -> List[UserFunctionResult]:
+        """
+        Evaluates python function by providing it with numpy types and converts the output to a
+        List of UserFunctionResults
+
+        :param inputs: List of function inputs at which to evaluate function
+        :return: List of function results
+        """
+        if inputs.ndim != 2:
+            raise ValueError("User function should receive 2d array as an input, actual input dimensionality is {}".format(inputs.ndim))
+
+        outputs, costs = self.f(inputs)
+
+        if outputs.ndim != 2:
+            raise ValueError("User function should return 2d array as an output, "
+                             "actual output dimensionality is {}".format(outputs.ndim))
+
+        if costs.ndim != 2:
+            raise ValueError("User function should return 2d array as for costs, "
+                             "actual dimensionality is {}".format(costs.ndim))
+
+        results = []
+        for x, y, c in zip(inputs, outputs, costs):
+            results.append(UserFunctionResult(x, y, c))
+        return results
+
