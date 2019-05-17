@@ -49,12 +49,12 @@ elif args.acquisition_type == "nlcb":
 
 if args.model_type == "rf":
     loops = [(name, lambda s: create_bayesian_optimization_loop(s.X, s.Y, s.cost, parameter_space,
-                                                                acquisition,
-                                                                ModelType.RandomForest))]
+                                                                acquisition_type=acquisition,
+                                                                model_type=ModelType.RandomForest))]
 elif args.model_type == "bnn":
     loops = [(name, lambda s: create_bayesian_optimization_loop(s.X, s.Y, s.cost, parameter_space,
-                                                                acquisition,
-                                                                ModelType.BayesianNeuralNetwork))]
+                                                                acquisition_type=acquisition,
+                                                                model_type=ModelType.BayesianNeuralNetwork))]
 elif args.model_type == "gp":
     loops = [(name, lambda s: GPBayesianOptimization(parameter_space.parameters, s.X, s.Y,
                                                      acquisition_type=acquisition, noiseless=False))]
