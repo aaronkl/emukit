@@ -40,7 +40,10 @@ elif args.benchmark == "meta_svm":
                                     fname_cost=fname_cost,
                                     noise=args.noise)
 
-name = args.model_type + "_" + args.acquisition_type
+if args.model_type == "rs":
+    name = args.model_type
+else:
+    name = args.model_type + "_" + args.acquisition_type
 
 if args.acquisition_type == "ei":
     acquisition = AcquisitionType.EI
@@ -64,7 +67,7 @@ elif args.model_type == "gp":
                                                      acquisition_type=acquisition, noiseless=False))]
 
 elif args.model_type == "rs":
-    loops = [(name, lambda s: RandomSearch(parameter_space))]
+    loops = [(name, lambda s: RandomSearch(parameter_space, x_init=s.X, y_init=s.Y, cost_init=s.cost))]
 
 metrics = [MinimumObservedValueMetric(), TimeMetric(), CumulativeCostMetric()]
 
