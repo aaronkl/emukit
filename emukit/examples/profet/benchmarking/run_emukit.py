@@ -7,8 +7,10 @@ from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester
 from emukit.examples.gp_bayesian_optimization.enums import ModelType, AcquisitionType
 from emukit.examples.gp_bayesian_optimization.optimization_loops import create_bayesian_optimization_loop
 from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
+from emukit.examples.gp_bayesian_optimization.random_search import RandomSearch
 from emukit.benchmarking.loop_benchmarking.benchmarker import Benchmarker
 from emukit.benchmarking.loop_benchmarking.metrics import MinimumObservedValueMetric, TimeMetric, CumulativeCostMetric
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_id', default=0, type=int, nargs='?')
@@ -60,6 +62,9 @@ elif args.model_type == "bnn":
 elif args.model_type == "gp":
     loops = [(name, lambda s: GPBayesianOptimization(parameter_space.parameters, s.X, s.Y,
                                                      acquisition_type=acquisition, noiseless=False))]
+
+elif args.model_type == "rs":
+    loops = [(name, lambda s: RandomSearch(parameter_space))]
 
 metrics = [MinimumObservedValueMetric(), TimeMetric(), CumulativeCostMetric()]
 
