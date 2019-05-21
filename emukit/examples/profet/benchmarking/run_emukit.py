@@ -1,16 +1,14 @@
-import os
 import argparse
+import os
 import pickle
 
-from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester
-
-from emukit.examples.gp_bayesian_optimization.enums import ModelType, AcquisitionType
-from emukit.examples.gp_bayesian_optimization.optimization_loops import create_bayesian_optimization_loop
-from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
-from emukit.examples.gp_bayesian_optimization.random_search import RandomSearch
 from emukit.benchmarking.loop_benchmarking.benchmarker import Benchmarker
 from emukit.benchmarking.loop_benchmarking.metrics import MinimumObservedValueMetric, TimeMetric, CumulativeCostMetric
-
+from emukit.examples.gp_bayesian_optimization.enums import ModelType, AcquisitionType
+from emukit.examples.gp_bayesian_optimization.optimization_loops import create_bayesian_optimization_loop
+from emukit.examples.gp_bayesian_optimization.random_search import RandomSearch
+from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
+from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_id', default=0, type=int, nargs='?')
@@ -39,6 +37,13 @@ elif args.benchmark == "meta_svm":
     fcn, parameter_space = meta_svm(fname_objective=fname_objective,
                                     fname_cost=fname_cost,
                                     noise=args.noise)
+elif args.benchmark == "meta_fcnet":
+
+    fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
+    fname_cost = os.path.join(args.sample_path, "sample_cost_%d.pkl" % args.instance_id)
+    fcn, parameter_space = meta_fcnet(fname_objective=fname_objective,
+                                      fname_cost=fname_cost,
+                                      noise=args.noise)
 
 if args.model_type == "rs":
     name = args.model_type
@@ -81,7 +86,6 @@ if bool(args.noise):
 else:
     output_path = os.path.join(args.output_path, args.benchmark + "_noiseless", name, "instance_%d" % args.instance_id)
 os.makedirs(output_path, exist_ok=True)
-
 
 fh = open(os.path.join(output_path, "run_%d.pkl" % args.run_id), "wb")
 pickle.dump(benchmark_results, fh)
