@@ -18,7 +18,8 @@ from ..local_penalization_calculator import LocalPenalizationPointCalculator
 
 class BayesianOptimizationLoop(OuterLoop):
     def __init__(self, space: ParameterSpace, model: IModel, acquisition: Acquisition = None, update_interval: int = 1,
-                 batch_size: int = 1, acquisition_optimizer: AcquisitionOptimizerBase = None):
+                 batch_size: int = 1, cost_init: np.ndarray=None,
+                 acquisition_optimizer: AcquisitionOptimizerBase = None):
 
         """
         Emukit class that implement a loop for building modular Bayesian optimization
@@ -33,6 +34,8 @@ class BayesianOptimizationLoop(OuterLoop):
                                       by maximizing acquisition.
                                       Gradient based optimizer is used if None.
                                       Defaults to None.
+        :param cost_init: 2d numpy array of shape (no. points x no. targets) of initial cost of
+                          each function evaluation which is passed to the loop state
         """
 
         self.model = model
@@ -54,7 +57,7 @@ class BayesianOptimizationLoop(OuterLoop):
             candidate_point_calculator = LocalPenalizationPointCalculator(log_acquisition, acquisition_optimizer, model,
                                                                           space, batch_size)
 
-        loop_state = create_loop_state(model.X, model.Y)
+        loop_state = create_loop_state(model.X, model.Y, cost=cost_init)
 
         super().__init__(candidate_point_calculator, model_updaters, loop_state)
 
