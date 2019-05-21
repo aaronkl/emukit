@@ -3,17 +3,19 @@
 
 
 from enum import Enum
+
 import numpy as np
-
-from GPy.models import GPRegression
 from GPy.kern import Matern52
+from GPy.models import GPRegression
 
-from ...core.parameter_space import ParameterSpace
-from ...core.loop import FixedIterationsStoppingCondition, UserFunction
-from ...bayesian_optimization.acquisitions import ExpectedImprovement, NegativeLowerConfidenceBound, ProbabilityOfImprovement
-from ...bayesian_optimization.loops import BayesianOptimizationLoop
-from ...model_wrappers.gpy_model_wrappers import GPyModelWrapper
 from .enums import AcquisitionType
+from ...bayesian_optimization.acquisitions import ExpectedImprovement, NegativeLowerConfidenceBound, \
+    ProbabilityOfImprovement
+from ...core.acquisition import IntegratedHyperParameterAcquisition
+from ...bayesian_optimization.loops import BayesianOptimizationLoop
+from ...core.loop import FixedIterationsStoppingCondition, UserFunction
+from ...core.parameter_space import ParameterSpace
+from ...model_wrappers.gpy_model_wrappers import GPyModelWrapper
 
 
 class OptimizerType(Enum):
@@ -24,6 +26,7 @@ class GPBayesianOptimization(BayesianOptimizationLoop):
     def __init__(self, variables_list: list, X: np.array, Y: np.array, noiseless: bool = False,
                  acquisition_type: AcquisitionType = AcquisitionType.EI, normalize_Y: bool = True,
                  acquisition_optimizer_type: OptimizerType = OptimizerType.LBFGS,
+                 integrate_hyperparameters: bool = True,
                  model_update_interval: int = int(1)) -> None:
 
         """
@@ -62,7 +65,7 @@ class GPBayesianOptimization(BayesianOptimizationLoop):
         self._model_chooser()
 
         # 3. Select the acquisition function
-        self._acquisition_chooser()
+        self._acquisition_chooser(integrate_hyperparameters)
 
         super(GPBayesianOptimization, self).__init__(model=self.model,
                                                      space=self.space,
@@ -70,6 +73,7 @@ class GPBayesianOptimization(BayesianOptimizationLoop):
 
     def _model_chooser(self):
         """ Initialize the model used for the optimization """
+
         kernel = Matern52(len(self.variables_list), variance=1., ARD=False)
         gpmodel = GPRegression(self.X, self.Y, kernel)
         gpmodel.optimize()
@@ -78,14 +82,20 @@ class GPBayesianOptimization(BayesianOptimizationLoop):
             gpmodel.Gaussian_noise.constrain_fixed(0.001)
         self.model = GPyModelWrapper(gpmodel)
 
-    def _acquisition_chooser(self):
+    def _acquisition_chooser(self, integrate_hyperparameters):
         """ Select the acquisition function used in the optimization """
         if self.acquisition_type is AcquisitionType.EI:
-            self.acquisition = ExpectedImprovement(self.model)
+            acq = ExpectedImprovement
         elif self.acquisition_type is AcquisitionType.PI:
-            self.acquisition = ProbabilityOfImprovement(self.model)
+            acq = ProbabilityOfImprovement
         elif self.acquisition_type is AcquisitionType.NLCB:
-            self.acquisition = NegativeLowerConfidenceBound(self.model)
+            acq = NegativeLowerConfidenceBound
+
+        if integrate_hyperparameters:
+            acquisition_generator = lambda model: acq(model)
+            self.acquisition = IntegratedHyperParameterAcquisition(self.model, acquisition_generator)
+        else:
+            self.acquisition = acq(self.model)
 
     def suggest_new_locations(self):
         """ Returns one or a batch of locations without evaluating the objective """
