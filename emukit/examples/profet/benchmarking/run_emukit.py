@@ -1,14 +1,18 @@
 import argparse
 import os
 import pickle
+import GPy
 
+from emukit.bayesian_optimization.acquisitions import ExpectedImprovement
+from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 from emukit.benchmarking.loop_benchmarking.benchmarker import Benchmarker
 from emukit.benchmarking.loop_benchmarking.metrics import MinimumObservedValueMetric, TimeMetric, CumulativeCostMetric
-from emukit.examples.gp_bayesian_optimization.enums import ModelType, AcquisitionType
-from emukit.examples.gp_bayesian_optimization.optimization_loops import create_bayesian_optimization_loop
+from emukit.core.acquisition import IntegratedHyperParameterAcquisition
 from emukit.examples.gp_bayesian_optimization.random_search import RandomSearch
-from emukit.examples.gp_bayesian_optimization.single_objective_bayesian_optimization import GPBayesianOptimization
+from emukit.examples.models.bohamiann import Bohamiann
+from emukit.examples.models.random_forest import RandomForest
 from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet
+from emukit.model_wrappers.gpy_model_wrappers import GPyModelWrapper
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_id', default=0, type=int, nargs='?')
@@ -45,31 +49,65 @@ elif args.benchmark == "meta_fcnet":
                                       fname_cost=fname_cost,
                                       noise=args.noise)
 
-if args.model_type == "rs":
-    name = args.model_type
-else:
-    name = args.model_type + "_" + args.acquisition_type
-
-if args.acquisition_type == "ei":
-    acquisition = AcquisitionType.EI
-elif args.acquisition_type == "pi":
-    acquisition = AcquisitionType.PI
-elif args.acquisition_type == "nlcb":
-    acquisition = AcquisitionType.NLCB
+name = args.model_type
 
 if args.model_type == "rf":
-    loops = [(name, lambda s: create_bayesian_optimization_loop(s.X, s.Y, parameter_space=parameter_space,
-                                                                cost_init=s.cost,
-                                                                acquisition_type=acquisition,
-                                                                model_type=ModelType.RandomForest))]
+    def get_loop(state):
+        model = RandomForest(state.X, state.Y)
+
+        acquisition = ExpectedImprovement(model)
+
+        return BayesianOptimizationLoop(space=parameter_space, model=model,
+                                        acquisition=acquisition, cost_init=state.cost)
+
+
+    loops = [(name, get_loop)]
+
 elif args.model_type == "bnn":
-    loops = [(name, lambda s: create_bayesian_optimization_loop(s.X, s.Y, parameter_space=parameter_space,
-                                                                cost_init=s.cost,
-                                                                acquisition_type=acquisition,
-                                                                model_type=ModelType.BayesianNeuralNetwork))]
+
+    def get_loop(state):
+        model = Bohamiann(state.X, state.Y, num_burnin=1000, num_steps=5000)
+
+        acquisition = ExpectedImprovement(model)
+
+        return BayesianOptimizationLoop(space=parameter_space, model=model,
+                                        acquisition=acquisition, cost_init=state.cost)
+
+
+    loops = [(name, get_loop)]
+
 elif args.model_type == "gp":
-    loops = [(name, lambda s: GPBayesianOptimization(parameter_space.parameters, s.X, s.Y,
-                                                     acquisition_type=acquisition, noiseless=False))]
+
+    def get_loop(state):
+        kernel = GPy.kern.Matern52(state.X.shape[1], variance=1., ARD=False)
+        gpmodel = GPy.models.GPRegression(state.X, state.Y, kernel)
+
+        model = GPyModelWrapper(gpmodel)
+
+        acquisition = ExpectedImprovement(model)
+
+        return BayesianOptimizationLoop(space=parameter_space, model=model,
+                                        acquisition=acquisition, cost_init=state.cost)
+
+
+    loops = [(name, get_loop)]
+
+elif args.model_type == "gp_mcmc":
+
+    def get_loop(state):
+        kernel = GPy.kern.Matern52(state.X.shape[1], variance=1., ARD=False)
+        gpmodel = GPy.models.GPRegression(state.X, state.Y, kernel)
+
+        model = GPyModelWrapper(gpmodel)
+
+        acquisition_generator = lambda model: ExpectedImprovement(model)
+        acquisition = IntegratedHyperParameterAcquisition(model, acquisition_generator)
+
+        return BayesianOptimizationLoop(space=parameter_space, model=model,
+                                        acquisition=acquisition, cost_init=state.cost)
+
+
+    loops = [(name, get_loop)]
 
 elif args.model_type == "rs":
     loops = [(name, lambda s: RandomSearch(parameter_space, x_init=s.X, y_init=s.Y, cost_init=s.cost))]
