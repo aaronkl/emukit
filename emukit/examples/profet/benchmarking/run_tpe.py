@@ -45,8 +45,8 @@ def wrapper(config):
         y = fcn(np.array([x]))
     else:
         y, c = fcn(np.array([x]))
+        costs.append(c)
     all_y.append(float(y[0, 0]))
-    # costs.append(c)
     return {
         'config': config,
         'loss': y,
