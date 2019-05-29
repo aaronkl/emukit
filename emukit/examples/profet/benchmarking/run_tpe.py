@@ -3,7 +3,7 @@ import json
 import os
 
 import numpy as np
-from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester
+from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet
 from hyperopt import fmin, tpe, hp, STATUS_OK
 from util import estimate_incumbent
 
@@ -31,6 +31,13 @@ elif args.benchmark == "meta_svm":
     fcn, parameter_space = meta_svm(fname_objective=fname_objective,
                                     fname_cost=fname_cost,
                                     noise=args.noise)
+elif args.benchmark == "meta_fcnet":
+
+    fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
+    fname_cost = os.path.join(args.sample_path, "sample_cost_%d.pkl" % args.instance_id)
+    fcn, parameter_space = meta_fcnet(fname_objective=fname_objective,
+                                      fname_cost=fname_cost,
+                                      noise=args.noise)
 
 all_y = []
 costs = []
