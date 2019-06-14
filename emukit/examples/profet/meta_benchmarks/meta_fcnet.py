@@ -24,19 +24,19 @@ def meta_fcnet(fname_objective: str, fname_cost: str, noise: bool=True) -> Tuple
     :return: Tuple of user function object and parameter space
     """
     parameter_space = ParameterSpace([
-        ContinuousParameter('lr', 1e-6, 1e-1),
-        ContinuousParameter('batch_size', 8, 128),
-        ContinuousParameter('n_units_1', 16, 512),
-        ContinuousParameter('n_units_2', 16, 512),
-        ContinuousParameter('dropout_1', 0, 0.99),
-        ContinuousParameter('dropout_2', 0, 0.99),
+        ContinuousParameter('lr', 0, 1),  # original space [1e-6, 1e-1]
+        ContinuousParameter('batch_size', 0, 1),  # original space [8, 128]
+        ContinuousParameter('n_units_1', 0, 1),  # original space [16, 512]
+        ContinuousParameter('n_units_2', 0, 1),  # original space [16, 512]
+        ContinuousParameter('dropout_1', 0, 1),  # original space [0, 0.99]
+        ContinuousParameter('dropout_2', 0, 1),  # original space [0, 0.99]
     ])
     data = pickle.load(open(fname_objective, "rb"))
 
     x_mean_objective = data["x_mean"]
     x_std_objective = data["x_std"]
-    y_mean_objective = data["y_mean"]
-    y_std_objective = data["y_std"]
+    # y_mean_objective = data["y_mean"]
+    # y_std_objective = data["y_std"]
     task_feature_objective = data["task_feature"]
     objective = get_default_architecture_classification(x_mean_objective.shape[0]).float()
     objective.load_state_dict(data["state_dict"])
@@ -57,8 +57,10 @@ def meta_fcnet(fname_objective: str, fname_cost: str, noise: bool=True) -> Tuple
         x = np.concatenate((config, Ht), axis=1)
         x_norm = torch.from_numpy((x - x_mean_objective) / x_std_objective).float()
         o = objective.forward(x_norm).data.numpy()
-        m = o[:, 0] * y_std_objective + y_mean_objective
-        log_v = o[:, 1] * y_std_objective ** 2
+        # m = o[:, 0] * y_std_objective + y_mean_objective
+        # log_v = o[:, 1] * y_std_objective ** 2
+        m = o[:, 1]
+        log_v = o[:, 1]
         if with_noise:
             feval = np.random.randn() * np.sqrt(np.exp(log_v)) + m
         else:
