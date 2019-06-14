@@ -7,8 +7,8 @@ from emukit.bayesian_optimization.acquisitions import ExpectedImprovement
 from emukit.bayesian_optimization.loops import BayesianOptimizationLoop
 from emukit.benchmarking.loop_benchmarking.benchmarker import Benchmarker
 from emukit.benchmarking.loop_benchmarking.metrics import MinimumObservedValueMetric, TimeMetric, CumulativeCostMetric
+from emukit.benchmarking.loop_benchmarking.random_search import RandomSearch
 from emukit.core.acquisition import IntegratedHyperParameterAcquisition
-from emukit.examples.gp_bayesian_optimization.random_search import RandomSearch
 from emukit.examples.models.bohamiann import Bohamiann
 from emukit.examples.models.random_forest import RandomForest
 from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet
