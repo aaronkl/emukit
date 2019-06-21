@@ -1,6 +1,7 @@
 import argparse
 import os
 import pickle
+
 import GPy
 
 from emukit.bayesian_optimization.acquisitions import ExpectedImprovement
@@ -11,7 +12,7 @@ from emukit.benchmarking.loop_benchmarking.random_search import RandomSearch
 from emukit.core.acquisition import IntegratedHyperParameterAcquisition
 from emukit.examples.models.bohamiann import Bohamiann
 from emukit.examples.models.random_forest import RandomForest
-from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet
+from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet, meta_xgboost
 from emukit.model_wrappers.gpy_model_wrappers import GPyModelWrapper
 
 parser = argparse.ArgumentParser()
@@ -41,6 +42,7 @@ elif args.benchmark == "meta_svm":
     fcn, parameter_space = meta_svm(fname_objective=fname_objective,
                                     fname_cost=fname_cost,
                                     noise=args.noise)
+
 elif args.benchmark == "meta_fcnet":
 
     fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
@@ -49,6 +51,13 @@ elif args.benchmark == "meta_fcnet":
                                       fname_cost=fname_cost,
                                       noise=args.noise)
 
+elif args.benchmark == "meta_xgboost":
+
+    fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
+    fname_cost = os.path.join(args.sample_path, "sample_cost_%d.pkl" % args.instance_id)
+    fcn, parameter_space = meta_xgboost(fname_objective=fname_objective,
+                                        fname_cost=fname_cost,
+                                        noise=args.noise)
 name = args.model_type
 
 if args.model_type == "rf":

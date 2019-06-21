@@ -8,7 +8,7 @@ from smac.facade.smac_facade import SMAC
 from smac.scenario.scenario import Scenario
 
 import numpy as np
-from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet
+from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet, meta_xgboost
 from util import estimate_incumbent
 
 parser = argparse.ArgumentParser()
@@ -42,6 +42,15 @@ elif args.benchmark == "meta_fcnet":
     fcn, parameter_space = meta_fcnet(fname_objective=fname_objective,
                                       fname_cost=fname_cost,
                                       noise=args.noise)
+
+elif args.benchmark == "meta_xgboost":
+
+    fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
+    fname_cost = os.path.join(args.sample_path, "sample_cost_%d.pkl" % args.instance_id)
+    fcn, parameter_space = meta_xgboost(fname_objective=fname_objective,
+                                        fname_cost=fname_cost,
+                                        noise=args.noise)
+
 cs = ConfigSpace.ConfigurationSpace()
 for p in parameter_space.parameters:
     cs.add_hyperparameter(ConfigSpace.UniformFloatHyperparameter(p.name, lower=p.min, upper=p.max))

@@ -38,6 +38,15 @@ elif args.benchmark == "meta_fcnet":
     fcn, parameter_space = meta_fcnet(fname_objective=fname_objective,
                                       fname_cost=fname_cost,
                                       noise=args.noise)
+
+elif args.benchmark == "meta_xgboost":
+
+    fname_objective = os.path.join(args.sample_path, "sample_objective_%d.pkl" % args.instance_id)
+    fname_cost = os.path.join(args.sample_path, "sample_cost_%d.pkl" % args.instance_id)
+    fcn, parameter_space = meta_xgboost(fname_objective=fname_objective,
+                                        fname_cost=fname_cost,
+                                        noise=args.noise)
+
 parameter_space.get_bounds()
 lower = np.array(parameter_space.get_bounds())[:, 0]
 upper = np.array(parameter_space.get_bounds())[:, 1]
