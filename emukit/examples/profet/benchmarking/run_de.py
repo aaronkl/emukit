@@ -3,7 +3,7 @@ import json
 import os
 
 import numpy as np
-from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet
+from emukit.examples.profet.meta_benchmarks import meta_svm, meta_forrester, meta_fcnet, meta_xgboost
 
 parser = argparse.ArgumentParser()
 
